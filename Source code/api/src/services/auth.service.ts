@@ -1,0 +1,83 @@
+import User, { IUser } from '../models/User';
+import { createJWT } from '../utils/jwt';
+import { BadRequestError, UnauthenticatedError } from '../utils/errors';
+
+const createUserToken = (user: IUser) => ({
+  userId: user._id,
+  email: user.email,
+  name: `${user.first_name} ${user.last_name}`,
+  role: user.role,
+});
+
+export const register = async (data: {
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+}) => {
+  const existing = await User.findOne({ email: data.email });
+  if (existing) {
+    throw new BadRequestError('Email ?? t?n t?i');
+  }
+
+  // First account becomes admin.
+  const isFirst = (await User.countDocuments({})) === 0;
+  const role = isFirst ? 'admin' : 'consumer';
+
+  const user = await User.create({ ...data, role });
+  const tokenUser = createUserToken(user);
+  const token = createJWT(tokenUser);
+
+  return { user: tokenUser, token };
+};
+
+export const login = async (email: string, password: string) => {
+  if (!email || !password) {
+    throw new BadRequestError('Vui l?ng nh?p email v? m?t kh?u');
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new UnauthenticatedError('Email ho?c m?t kh?u kh?ng ??ng');
+  }
+
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) {
+    throw new UnauthenticatedError('Email ho?c m?t kh?u kh?ng ??ng');
+  }
+
+  const tokenUser = createUserToken(user);
+  const token = createJWT(tokenUser);
+
+  return { user: tokenUser, token };
+};
+
+export const getAllUsers = async () => {
+  return User.find({}).select('-password');
+};
+
+export const getUserById = async (userId: string) => {
+  const user = await User.findById(userId).select('-password');
+  if (!user) {
+    throw new BadRequestError(`Kh?ng t?m th?y user ${userId}`);
+  }
+  return user;
+};
+
+export const updateUser = async (
+  userId: string,
+  data: Partial<IUser>
+) => {
+  // Password and role are not updated here.
+  const { password, role, ...safeData } = data as any;
+  const user = await User.findByIdAndUpdate(userId, safeData, {
+    new: true,
+    runValidators: true,
+  }).select('-password');
+
+  if (!user) {
+    throw new BadRequestError(`Kh?ng t?m th?y user ${userId}`);
+  }
+
+  return user;
+};

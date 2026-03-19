@@ -1,0 +1,13 @@
+DANH SÁCH TÀI KHOẢN TEST CHƯƠNG TRÌNH
+
+1. Admin
+Email: admin@gmail.com
+Password: 1230123
+
+2. Manager
+Email: managera@gmail.com
+Password: 1230123
+
+3. User
+Email: nguyenvana@gmail.com
+Password: 1230123

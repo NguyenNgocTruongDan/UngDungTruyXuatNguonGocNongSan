@@ -1,0 +1,55 @@
+import 'package:app/screens/add_event_screen.dart';
+import 'package:app/screens/farmer/farmer_dashboard_screen.dart';
+import 'package:app/screens/home_screen.dart';
+import 'package:app/screens/login_screen.dart';
+import 'package:app/screens/qr_scanner_screen.dart';
+import 'package:app/screens/timeline_screen.dart';
+import 'package:flutter/material.dart';
+
+class AppRouter {
+  static const home = '/';
+  static const timeline = '/timeline';
+  static const trace = '/trace';
+  static const login = '/login';
+  static const farmer = '/farmer';
+  static const scanner = '/scanner';
+  static const addEvent = '/add-event';
+
+  static Route<dynamic> generateRoute(RouteSettings settings) {
+    final uri = Uri.parse(settings.name ?? '/');
+
+    switch (uri.path) {
+      case home:
+        return _page(const HomeScreen());
+
+      case timeline:
+      case trace:
+        final batchId = uri.queryParameters['batchId'] ??
+            uri.queryParameters['productId'] ??
+            (settings.arguments as String?);
+        return _page(TimelineScreen(initialBatchId: batchId));
+
+      case login:
+        return _page(const LoginScreen());
+
+      case farmer:
+        return _page(const FarmerDashboardScreen());
+
+      case scanner:
+        return _page(const QrScannerScreen());
+
+      case addEvent:
+        final batchId = uri.queryParameters['batchId'] ??
+            uri.queryParameters['productId'] ??
+            (settings.arguments as String?);
+        return _page(AddEventScreen(initialBatchId: batchId));
+
+      default:
+        return _page(const HomeScreen());
+    }
+  }
+
+  static MaterialPageRoute _page(Widget child) {
+    return MaterialPageRoute(builder: (_) => child);
+  }
+}

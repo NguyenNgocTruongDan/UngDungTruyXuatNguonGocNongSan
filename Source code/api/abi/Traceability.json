@@ -1,0 +1,11 @@
+[
+  "function createBatch(string calldata batchId) external",
+  "function addAction(string calldata batchId, bytes32 dataHash, uint8 actionType) external",
+  "function getHistory(string calldata batchId) external view returns (address owner, tuple(bytes32 dataHash, uint8 actionType, uint64 timestamp, address recorder)[] actions)",
+  "function verifyAction(string calldata batchId, uint256 index, bytes32 dataHash) external view returns (bool matched)",
+  "function getActionCount(string calldata batchId) external view returns (uint256 count)",
+  "function batchExists(string calldata batchId) external view returns (bool)",
+  "function getBatchOwner(string calldata batchId) external view returns (address)",
+  "event BatchCreated(string indexed batchId, address indexed owner, uint256 timestamp)",
+  "event ActionAdded(string indexed batchId, bytes32 dataHash, uint8 actionType, address indexed recorder, uint256 timestamp)"
+]

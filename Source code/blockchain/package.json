@@ -1,0 +1,18 @@
+{
+  "name": "agri-trace-blockchain",
+  "version": "1.0.0",
+  "description": "Smart contracts for agricultural traceability",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "deploy:local": "npx hardhat run scripts/deploy.ts --network localhost",
+    "deploy:sepolia": "npx hardhat run scripts/deploy.ts --network sepolia",
+    "deploy:amoy": "npx hardhat run scripts/deploy.ts --network amoy",
+    "node": "npx hardhat node"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "dotenv": "^17.3.1",
+    "hardhat": "^2.22.0"
+  }
+}
