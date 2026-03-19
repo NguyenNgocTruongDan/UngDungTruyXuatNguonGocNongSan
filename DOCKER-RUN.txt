@@ -1,0 +1,28 @@
+CHAY DU AN BANG DOCKER
+
+Yeu cau:
+- Cai Docker Desktop
+
+Cach nhanh nhat:
+1. Mo Docker Desktop
+2. Double click file start-docker.bat
+
+Neu chay bang terminal:
+docker compose up --build
+
+Dia chi sau khi chay:
+- Web: http://localhost:3000
+- API: http://localhost:5000
+- Blockchain RPC: http://127.0.0.1:8545
+
+Luu y:
+- Ban Docker nay da tu dung Mongo local trong container
+- Blockchain dung Hardhat local va auto deploy contract
+- API tu doc contract address sau khi deploy
+- Khong can tao .env rieng de demo bang Docker
+
+Tat he thong:
+docker compose down
+
+Xoa ca volume du lieu:
+docker compose down -v
