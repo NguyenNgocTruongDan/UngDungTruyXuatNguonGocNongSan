@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { productApi } from '../../core/api/product.api';
+import { farmingAreaApi, FarmingArea as FarmingAreaType } from '../../core/api/farmingArea.api';
+import { colors, spacing, borderRadius, shadows, typography } from '../../core/theme';
 import type { Product } from '../../core/types';
 
 type ProductionType = 'Plant' | 'Animal';
@@ -14,27 +16,29 @@ const statusLabel: Record<string, string> = {
   completed: 'Hoàn tất',
 };
 
-const statusColor: Record<string, string> = {
-  draft: '#6b7280',
-  active: '#16a34a',
-  completed: '#2563eb',
+const statusColors: Record<string, { bg: string; text: string }> = {
+  draft: { bg: colors.neutral[100], text: colors.neutral[600] },
+  active: { bg: colors.primary[100], text: colors.primary[700] },
+  completed: { bg: '#dbeafe', text: '#1d4ed8' },
 };
 
 const productionTypeMeta: Record<
   ProductionType,
-  { label: string; subtitle: string; startLabel: string; placeholder: string }
+  { label: string; subtitle: string; startLabel: string; placeholder: string; icon: string }
 > = {
   Plant: {
     label: 'Trồng trọt',
     subtitle: 'Dùng cho rau, củ, quả, nấm, ngũ cốc...',
     startLabel: 'Ngày bắt đầu gieo trồng',
     placeholder: 'Ví dụ: Xà lách lứa tháng 3',
+    icon: '🌱',
   },
   Animal: {
     label: 'Chăn nuôi',
     subtitle: 'Dùng cho gia súc, gia cầm, thủy sản...',
     startLabel: 'Ngày bắt đầu nuôi / nhập đàn',
     placeholder: 'Ví dụ: Gà ta lứa tháng 3',
+    icon: '🐔',
   },
 };
 
@@ -43,56 +47,66 @@ const defaultCategoryOptions: CategoryStore = {
   Animal: ['Gia cầm', 'Gia súc', 'Thủy sản', 'Sữa / Trứng', 'Mật ong', 'Khác'],
 };
 
-const card = (label: string, value: string | number, color = '#111'): React.ReactNode => (
-  <div
-    style={{
-      backgroundColor: '#fff',
-      border: '1px solid #e5e7eb',
-      borderRadius: 12,
-      padding: '16px 24px',
-      minWidth: 150,
-    }}
-  >
-    <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{label}</p>
-    <p style={{ margin: '4px 0 0', fontSize: 28, fontWeight: 700, color }}>{value}</p>
+const StatCard: React.FC<{ label: string; value: string | number; color?: string }> = ({ label, value, color = colors.textPrimary }) => (
+  <div style={{
+    background: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing[6],
+    boxShadow: shadows.sm,
+    border: `1px solid ${colors.neutral[200]}`,
+  }}>
+    <p style={{ margin: 0, fontSize: typography.sizes.sm, color: colors.textSecondary, marginBottom: spacing[1] }}>{label}</p>
+    <p style={{ margin: 0, fontSize: typography.sizes['3xl'], fontWeight: typography.weights.bold, color }}>{value}</p>
   </div>
 );
 
 const fieldStyle: React.CSSProperties = {
-  padding: 12,
-  borderRadius: 10,
-  border: '1px solid #d1d5db',
-  fontSize: 14,
+  padding: `${spacing[3]} ${spacing[4]}`,
+  borderRadius: borderRadius.lg,
+  border: `1px solid ${colors.neutral[300]}`,
+  fontSize: typography.sizes.base,
   width: '100%',
   boxSizing: 'border-box',
+  outline: 'none',
+  transition: 'border-color 0.2s ease',
 };
 
 const secondaryButtonStyle: React.CSSProperties = {
-  border: '1px solid #d1d5db',
-  background: '#fff',
-  color: '#374151',
-  borderRadius: 10,
-  padding: '10px 14px',
+  border: `1px solid ${colors.neutral[300]}`,
+  background: colors.surface,
+  color: colors.textSecondary,
+  borderRadius: borderRadius.lg,
+  padding: `${spacing[3]} ${spacing[4]}`,
   cursor: 'pointer',
-  fontWeight: 600,
+  fontWeight: typography.weights.medium,
+  fontSize: typography.sizes.sm,
+  transition: 'all 0.2s ease',
 };
 
 const ghostButtonStyle: React.CSSProperties = {
   border: 'none',
   background: 'transparent',
-  color: '#166534',
-  borderRadius: 8,
-  padding: '8px 10px',
+  color: colors.primary[600],
+  borderRadius: borderRadius.md,
+  padding: `${spacing[2]} ${spacing[3]}`,
   cursor: 'pointer',
-  fontWeight: 600,
+  fontWeight: typography.weights.medium,
+  fontSize: typography.sizes.sm,
 };
 
 const thStyle: React.CSSProperties = {
-  padding: '10px 16px',
+  padding: `${spacing[3]} ${spacing[4]}`,
   textAlign: 'left',
-  fontWeight: 600,
-  color: '#374151',
-  fontSize: 14,
+  fontWeight: typography.weights.semibold,
+  color: colors.textSecondary,
+  fontSize: typography.sizes.sm,
+  borderBottom: `1px solid ${colors.neutral[200]}`,
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: `${spacing[4]} ${spacing[4]}`,
+  borderBottom: `1px solid ${colors.neutral[100]}`,
+  fontSize: typography.sizes.sm,
 };
 
 const normalizeGroupName = (value: string) => value.trim().replace(/\s+/g, ' ');
@@ -128,6 +142,7 @@ const formatDate = (value?: string) => {
 
 const DashboardPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [farmingAreas, setFarmingAreas] = useState<FarmingAreaType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -146,6 +161,7 @@ const DashboardPage: React.FC = () => {
     type: 'Plant' as ProductionType,
     category: loadCategoryOptions().Plant[0] ?? '',
     name: '',
+    farmingAreaId: '',
     origin: '',
     cultivationTime: '',
     note: '',
@@ -154,15 +170,18 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     let mounted = true;
 
-    productApi
-      .getAll()
-      .then((res) => {
+    Promise.all([
+      productApi.getAll(),
+      farmingAreaApi.getAll(),
+    ])
+      .then(([productRes, farmingAreaRes]) => {
         if (!mounted) return;
-        setProducts(res.data.products);
+        setProducts(productRes.data.products);
+        setFarmingAreas(farmingAreaRes.data.farmingAreas || []);
       })
       .catch((err) => {
         if (!mounted) return;
-        setError(err.message || 'Lỗi tải sản phẩm');
+        setError(err.message || 'Lỗi tải dữ liệu');
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -221,6 +240,16 @@ const DashboardPage: React.FC = () => {
     ) => {
       setFormData((prev) => ({ ...prev, [field]: e.target.value }));
     };
+
+  const handleFarmingAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const areaId = e.target.value;
+    const selectedArea = farmingAreas.find((area) => area._id === areaId);
+    setFormData((prev) => ({
+      ...prev,
+      farmingAreaId: areaId,
+      origin: selectedArea?.address || prev.origin,
+    }));
+  };
 
   const handleTypeChange = (type: ProductionType) => {
     setGroupError('');
@@ -379,6 +408,7 @@ const DashboardPage: React.FC = () => {
         description: buildDescription(),
         origin: formData.origin.trim(),
         cultivation_time: formData.cultivationTime || undefined,
+        farming_area: formData.farmingAreaId || undefined,
       });
 
       setProducts((prev) => [data.product, ...prev]);
@@ -386,6 +416,7 @@ const DashboardPage: React.FC = () => {
         ...prev,
         category: categoryOptions[prev.type][0] ?? '',
         name: '',
+        farmingAreaId: '',
         origin: '',
         cultivationTime: '',
         note: '',
@@ -398,77 +429,99 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  if (loading) return <p style={{ padding: 24, color: '#6b7280' }}>Đang tải...</p>;
-  if (error) return <p style={{ padding: 24, color: 'red' }}>Lỗi: {error}</p>;
+  if (loading) return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+      <p style={{ color: colors.textSecondary }}>Đang tải...</p>
+    </div>
+  );
+  if (error) return (
+    <div style={{ padding: spacing[6], background: '#fef2f2', borderRadius: borderRadius.lg, color: colors.error }}>
+      Lỗi: {error}
+    </div>
+  );
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: 24,
-          gap: 16,
-          flexWrap: 'wrap',
-        }}
-      >
+      {/* Page Header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: spacing[8],
+        gap: spacing[4],
+        flexWrap: 'wrap',
+      }}>
         <div>
-          <h1 style={{ margin: 0 }}>Lô nông sản</h1>
-          <p style={{ margin: '4px 0 0', color: '#6b7280' }}>
-            Tạo lô mới, tự quản lý nhóm sản phẩm và ghi nhận truy xuất theo đúng thực tế.
+          <h1 style={{ 
+            margin: 0, 
+            fontSize: typography.sizes['3xl'], 
+            fontWeight: typography.weights.bold,
+            color: colors.textPrimary,
+          }}>
+            Lô nông sản
+          </h1>
+          <p style={{ margin: `${spacing[2]} 0 0`, color: colors.textSecondary, fontSize: typography.sizes.base }}>
+            Tạo lô mới và quản lý truy xuất nguồn gốc
           </p>
         </div>
         <Link
           to="/add-event"
           style={{
-            padding: '10px 16px',
-            borderRadius: 10,
-            background: '#166534',
-            color: '#fff',
+            padding: `${spacing[3]} ${spacing[5]}`,
+            borderRadius: borderRadius.lg,
+            background: colors.primary[600],
+            color: 'white',
             textDecoration: 'none',
-            fontWeight: 700,
+            fontWeight: typography.weights.semibold,
+            fontSize: typography.sizes.sm,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: spacing[2],
           }}
         >
-          Ghi sự kiện
+          <span>+</span> Ghi sự kiện
         </Link>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-        {card('Tổng sản phẩm', products.length)}
-        {card('Đang theo dõi', active, '#16a34a')}
-        {card('Hoàn tất', completed, '#2563eb')}
+      {/* Stats Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: spacing[4], marginBottom: spacing[8] }}>
+        <StatCard label="Tổng lô hàng" value={products.length} />
+        <StatCard label="Đang theo dõi" value={active} color={colors.primary[600]} />
+        <StatCard label="Hoàn tất" value={completed} color="#2563eb" />
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(360px, 480px) minmax(0, 1fr)',
-          gap: 20,
-          alignItems: 'start',
-        }}
-      >
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(360px, 480px) minmax(0, 1fr)',
+        gap: spacing[6],
+        alignItems: 'start',
+      }}>
+        {/* Create Form */}
         <form
           onSubmit={handleCreate}
           style={{
-            background: '#fff',
-            border: '1px solid #e5e7eb',
-            borderRadius: 16,
-            padding: 24,
+            background: colors.surface,
+            borderRadius: borderRadius.xl,
+            padding: spacing[6],
+            boxShadow: shadows.md,
+            border: `1px solid ${colors.neutral[200]}`,
             display: 'grid',
-            gap: 18,
+            gap: spacing[5],
           }}
         >
           <div>
-            <h2 style={{ margin: 0, fontSize: 20 }}>Tạo lô hàng mới</h2>
-            <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 14 }}>
-              Bắt đầu từ mô hình sản xuất, sau đó chọn hoặc tự quản lý nhóm sản phẩm phù hợp.
+            <h2 style={{ margin: 0, fontSize: typography.sizes.xl, fontWeight: typography.weights.semibold }}>
+              Tạo lô hàng mới
+            </h2>
+            <p style={{ margin: `${spacing[2]} 0 0`, color: colors.textSecondary, fontSize: typography.sizes.sm }}>
+              Chọn mô hình sản xuất và nhập thông tin lô
             </p>
           </div>
 
-          <div style={{ display: 'grid', gap: 8 }}>
-            <span style={{ fontWeight: 700 }}>Mô hình sản xuất</span>
-            <div style={{ display: 'flex', gap: 10 }}>
+          {/* Production Type Tabs */}
+          <div style={{ display: 'grid', gap: spacing[2] }}>
+            <span style={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm }}>Mô hình sản xuất</span>
+            <div style={{ display: 'flex', gap: spacing[3] }}>
               {(Object.keys(productionTypeMeta) as ProductionType[]).map((type) => {
                 const activeTab = formData.type === type;
                 const meta = productionTypeMeta[type];
@@ -479,11 +532,11 @@ const DashboardPage: React.FC = () => {
                     onClick={() => handleTypeChange(type)}
                     style={{
                       flex: 1,
-                      padding: '12px 14px',
-                      borderRadius: 10,
-                      border: activeTab ? '1px solid #166534' : '1px solid #d1d5db',
-                      background: activeTab ? '#dcfce7' : '#fff',
-                      color: activeTab ? '#166534' : '#374151',
+                      padding: `${spacing[4]} ${spacing[4]}`,
+                      borderRadius: borderRadius.lg,
+                      border: activeTab ? `2px solid ${colors.primary[600]}` : `1px solid ${colors.neutral[300]}`,
+                      background: activeTab ? colors.primary[50] : colors.surface,
+                      color: activeTab ? colors.primary[700] : colors.textSecondary,
                       cursor: 'pointer',
                       textAlign: 'left',
                     }}
@@ -720,6 +773,26 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Vùng trồng dropdown */}
+          <label style={{ display: 'grid', gap: 8 }}>
+            <span style={{ fontWeight: 700 }}>Vùng trồng / Trang trại</span>
+            <select
+              value={formData.farmingAreaId}
+              onChange={handleFarmingAreaChange}
+              style={{ ...fieldStyle, background: colors.surface }}
+            >
+              <option value="">-- Chọn vùng trồng (tùy chọn) --</option>
+              {farmingAreas.map((area) => (
+                <option key={area._id} value={area._id}>
+                  {area.name} - {area.address}
+                </option>
+              ))}
+            </select>
+            <span style={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+              Chọn vùng trồng sẽ tự động điền nơi sản xuất
+            </span>
+          </label>
+
           <label style={{ display: 'grid', gap: 8 }}>
             <span style={{ fontWeight: 700 }}>Tên lô / sản phẩm chính</span>
             <input
@@ -731,12 +804,22 @@ const DashboardPage: React.FC = () => {
           </label>
 
           <label style={{ display: 'grid', gap: 8 }}>
-            <span style={{ fontWeight: 700 }}>Nơi sản xuất</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 700 }}>Nơi sản xuất</span>
+              {formData.farmingAreaId && (
+                <span style={{ fontSize: typography.sizes.xs, color: colors.primary[600] }}>
+                  ✓ Từ vùng trồng
+                </span>
+              )}
+            </div>
             <input
               value={formData.origin}
               onChange={handleChange('origin')}
               placeholder="Ví dụ: Đà Lạt, Lâm Đồng"
-              style={fieldStyle}
+              style={{
+                ...fieldStyle,
+                background: formData.farmingAreaId ? colors.neutral[50] : colors.surface,
+              }}
             />
           </label>
 
@@ -870,23 +953,23 @@ const DashboardPage: React.FC = () => {
                   <td style={{ padding: '12px 16px', color: '#6b7280' }}>
                     {formatDate(p.cultivation_time)}
                   </td>
-                  <td style={{ padding: '12px 16px' }}>
+                  <td style={tdStyle}>
                     <span
                       style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: statusColor[p.status] || '#6b7280',
-                        background: `${statusColor[p.status] || '#6b7280'}18`,
-                        padding: '2px 10px',
-                        borderRadius: 9999,
+                        fontSize: typography.sizes.xs,
+                        fontWeight: typography.weights.medium,
+                        color: statusColors[p.status]?.text || colors.textSecondary,
+                        background: statusColors[p.status]?.bg || colors.neutral[100],
+                        padding: `${spacing[1]} ${spacing[3]}`,
+                        borderRadius: borderRadius.full,
                       }}
                     >
                       {statusLabel[p.status] || p.status}
                     </span>
                   </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                      <Link to={`/trace/${p._id}`} style={{ color: '#2563eb', fontSize: 13 }}>
+                  <td style={tdStyle}>
+                    <div style={{ display: 'flex', gap: spacing[3], alignItems: 'center' }}>
+                      <Link to={`/trace/${p._id}`} style={{ color: colors.primary[600], fontSize: typography.sizes.sm, textDecoration: 'none', fontWeight: typography.weights.medium }}>
                         Xem trace
                       </Link>
                       <Link

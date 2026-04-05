@@ -9,6 +9,7 @@ import {
   createBatchOnChain,
   batchExistsOnChain,
 } from './blockchain.service';
+import { notifyTraceEventAdded } from './notification.service';
 import env from '../config/env';
 
 const isBlockchainConfigured = () =>
@@ -87,6 +88,14 @@ export const createTraceEvent = async (
     onChainStatus: 'pending',
   });
 
+  // Notify product owner about the new trace event (if different from current user)
+  const productOwnerId = product.created_by.toString();
+  if (productOwnerId !== userId) {
+    notifyTraceEventAdded(productOwnerId, product.name, eventType, productId).catch((err) => {
+      console.error('Failed to send trace event notification:', err.message);
+    });
+  }
+
   if (!isBlockchainConfigured()) {
     traceEvent.onChainStatus = 'skipped';
     traceEvent.dataHash = hashEventData(coreData);
@@ -150,13 +159,25 @@ export const getEventsByProduct = async (productId: string) => {
 };
 
 export const getFullTrace = async (productId: string) => {
-  const product = await Product.findById(productId).populate(
-    'created_by',
-    'first_name last_name'
-  );
+  const product = await Product.findById(productId)
+    .populate('created_by', 'first_name last_name')
+    .populate({
+      path: 'farming_area',
+      select: 'name address area_size coordinates owner',
+      populate: [
+        {
+          path: 'certifications',
+          select: 'name type certificate_number status expiry_date issuing_authority scope'
+        },
+        {
+          path: 'owner',
+          select: 'first_name last_name email'
+        }
+      ]
+    });
 
   if (!product) {
-    throw new NotFoundError(`Kh?ng t?m th?y s?n ph?m ${productId}`);
+    throw new NotFoundError(`Không tìm thấy sản phẩm ${productId}`);
   }
 
   const events = await TraceEvent.find({ product: productId })

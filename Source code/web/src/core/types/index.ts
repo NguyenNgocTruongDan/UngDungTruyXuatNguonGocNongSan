@@ -8,6 +8,28 @@ export interface User {
   createdAt: string;
 }
 
+export interface FarmingArea {
+  _id: string;
+  name: string;
+  address: string;
+  area_size?: number;
+  coordinates?: { lat: number; lng: number };
+  owner?: User;
+  certifications?: Certification[];
+}
+
+export interface Certification {
+  _id: string;
+  name: string;
+  type: 'VietGAP' | 'GlobalGAP' | 'Organic' | 'HACCP' | 'ISO22000' | 'Other';
+  certificate_number: string;
+  issuing_authority: string;
+  issue_date: string;
+  expiry_date: string;
+  status: 'valid' | 'expired' | 'revoked';
+  scope?: string;
+}
+
 export interface Product {
   _id: string;
   name: string;
@@ -21,6 +43,7 @@ export interface Product {
   status: 'draft' | 'active' | 'completed';
   onChainBatchId?: string;
   created_by: string | User;
+  farming_area?: FarmingArea;
   createdAt: string;
   updatedAt: string;
 }
@@ -52,7 +75,7 @@ export interface TraceEvent {
   dataHash?: string;
   txHash?: string;
   blockNumber?: number;
-  onChainStatus: 'pending' | 'confirmed' | 'failed';
+  onChainStatus: 'pending' | 'confirmed' | 'failed' | 'skipped';
   actionIndex?: number;
   createdAt: string;
 }

@@ -61,6 +61,8 @@ class FarmerDashboardScreen extends ConsumerWidget {
                             ],
                           ),
                         ),
+                        _NotificationBellButton(),
+                        const SizedBox(width: 10),
                         InkWell(
                           borderRadius: BorderRadius.circular(18),
                           onTap: () {
@@ -472,6 +474,58 @@ class _ErrorState extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _NotificationBellButton extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadCountAsync = ref.watch(unreadNotificationCountProvider);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () => Navigator.pushNamed(context, AppRouter.notifications),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const GlassIconCapsule(
+            icon: Icons.notifications_outlined,
+            color: AppColors.ink,
+          ),
+          unreadCountAsync.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (count) {
+              if (count == 0) return const SizedBox.shrink();
+              return Positioned(
+                right: -4,
+                top: -4,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: AppColors.danger,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  child: Text(
+                    count > 99 ? '99+' : count.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

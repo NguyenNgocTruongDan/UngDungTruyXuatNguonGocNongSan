@@ -1,24 +1,47 @@
 import Product from '../models/Product';
+import FarmingArea from '../models/FarmingArea';
 import env from '../config/env';
 import { BadRequestError, NotFoundError } from '../utils/errors';
 import generateQR from '../utils/qrcode';
 import { createBatchOnChain } from './blockchain.service';
+import { notifyProductStatusChanged } from './notification.service';
 
 const isBlockchainConfigured = () =>
   !!(env.CONTRACT_ADDRESS && env.BLOCKCHAIN_PRIVATE_KEY);
 
 export const getAllProducts = async () => {
-  return Product.find({}).populate('created_by', 'first_name last_name email');
+  return Product.find({})
+    .populate('created_by', 'first_name last_name email')
+    .populate({
+      path: 'farming_area',
+      select: 'name address area_size coordinates',
+      populate: {
+        path: 'certifications',
+        select: 'name type certificate_number status expiry_date issuing_authority'
+      }
+    });
 };
 
 export const getProductById = async (productId: string) => {
-  const product = await Product.findById(productId).populate(
-    'created_by',
-    'first_name last_name email'
-  );
+  const product = await Product.findById(productId)
+    .populate('created_by', 'first_name last_name email')
+    .populate({
+      path: 'farming_area',
+      select: 'name address area_size coordinates owner',
+      populate: [
+        {
+          path: 'certifications',
+          select: 'name type certificate_number status expiry_date issuing_authority scope'
+        },
+        {
+          path: 'owner',
+          select: 'first_name last_name email'
+        }
+      ]
+    });
 
   if (!product) {
-    throw new NotFoundError(`Kh?ng t?m th?y s?n ph?m ${productId}`);
+    throw new NotFoundError(`Không tìm thấy sản phẩm ${productId}`);
   }
 
   return product;
@@ -33,14 +56,28 @@ export const createProduct = async (
     origin?: string;
     cultivation_time?: string;
     images?: { path: string; filename: string }[];
+    farming_area?: string;
   },
   userId: string
 ) => {
   if (!data.name || !data.category || !data.type || !data.description) {
-    throw new BadRequestError('Vui l?ng ?i?n ??y ?? th?ng tin s?n ph?m');
+    throw new BadRequestError('Vui lòng điền đầy đủ thông tin sản phẩm');
   }
 
-  const product = await Product.create({ ...data, created_by: userId });
+  // Auto-fill origin from farming area if not provided
+  let origin = data.origin;
+  if (data.farming_area && !origin) {
+    const farmingArea = await FarmingArea.findById(data.farming_area);
+    if (farmingArea) {
+      origin = farmingArea.address;
+    }
+  }
+
+  const product = await Product.create({ 
+    ...data, 
+    origin: origin || 'Việt Nam',
+    created_by: userId 
+  });
   const batchId = product._id.toString();
   let batchTxHash = '';
 
@@ -61,6 +98,16 @@ export const createProduct = async (
   product.qrcode = qrcode;
   await product.save();
 
+  // Populate farming_area for response
+  await product.populate({
+    path: 'farming_area',
+    select: 'name address area_size',
+    populate: {
+      path: 'certifications',
+      select: 'name type certificate_number status'
+    }
+  });
+
   return { product, batchId, batchTxHash };
 };
 
@@ -72,15 +119,38 @@ export const updateProduct = async (
     description: string;
     origin: string;
     cultivation_time: string;
+    status: string;
+    farming_area: string;
   }>
 ) => {
+  // Get the current product to check for status change
+  const currentProduct = await Product.findById(productId);
+  if (!currentProduct) {
+    throw new NotFoundError(`Không tìm thấy sản phẩm ${productId}`);
+  }
+
+  const oldStatus = currentProduct.status;
+  
   const product = await Product.findByIdAndUpdate(productId, data, {
     new: true,
     runValidators: true,
   });
 
   if (!product) {
-    throw new NotFoundError(`Kh?ng t?m th?y s?n ph?m ${productId}`);
+    throw new NotFoundError(`Không tìm thấy sản phẩm ${productId}`);
+  }
+
+  // Notify if status has changed
+  if (data.status && data.status !== oldStatus) {
+    notifyProductStatusChanged(
+      product.created_by.toString(),
+      product.name,
+      oldStatus,
+      data.status,
+      productId
+    ).catch((err) => {
+      console.error('Failed to send product status notification:', err.message);
+    });
   }
 
   return product;

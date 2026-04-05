@@ -10,6 +10,9 @@ export interface IUser extends Document {
   phone?: string;
   address?: string;
   role: 'admin' | 'manager' | 'farmer' | 'consumer';
+  isActive: boolean;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -50,6 +53,16 @@ const userSchema = new Schema<IUser>(
       type: String,
       enum: ['admin', 'manager', 'farmer', 'consumer'],
       default: 'consumer',
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordExpires: {
+      type: Date,
     },
   },
   { timestamps: true }

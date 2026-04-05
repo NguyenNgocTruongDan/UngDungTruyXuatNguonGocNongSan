@@ -12,10 +12,15 @@ import {
 import LoginPage from './pages/Login/LoginPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import TraceDetailPage from './pages/TraceDetail/TraceDetailPage';
+import FarmingAreaPage from './pages/FarmingArea/FarmingAreaPage';
+import CertificationPage from './pages/Certification/CertificationPage';
+import AdminPage from './pages/Admin/AdminPage';
+import ExportPage from './pages/Export/ExportPage';
 import { AuthProvider } from './core/context/AuthContext';
 import { useAuth } from './core/hooks/useAuth';
 import { productApi } from './core/api/product.api';
 import { traceEventApi } from './core/api/traceEvent.api';
+import { colors, spacing, borderRadius, shadows, typography } from './core/theme';
 import type { EventType, Product, TraceEvent } from './core/types';
 
 const eventTypeOptions: EventType[] = [
@@ -28,32 +33,54 @@ const eventTypeOptions: EventType[] = [
   'SHIPPING',
 ];
 
-const shellStyle: React.CSSProperties = {
-  minHeight: '100vh',
-  background: '#f7f8f4',
-  color: '#172033',
+const eventTypeLabels: Record<EventType, string> = {
+  SEEDING: '🌱 Gieo hạt',
+  FERTILIZING: '🧪 Bón phân',
+  WATERING: '💧 Tưới nước',
+  PEST_CONTROL: '🐛 Phòng trừ sâu bệnh',
+  HARVESTING: '🌾 Thu hoạch',
+  PACKAGING: '📦 Đóng gói',
+  SHIPPING: '🚚 Vận chuyển',
 };
 
-const contentStyle: React.CSSProperties = {
-  maxWidth: 1080,
-  margin: '0 auto',
-  padding: '24px 20px 40px',
-};
-
-const topNavLink = (active: boolean): React.CSSProperties => ({
-  color: active ? '#14532d' : '#475569',
-  textDecoration: 'none',
-  fontWeight: 700,
-  padding: '10px 14px',
-  borderRadius: 9999,
-  backgroundColor: active ? '#dcfce7' : 'transparent',
-});
+// Global styles
+const globalStyles = `
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { 
+    font-family: ${typography.fontFamily}; 
+    background: ${colors.background}; 
+    color: ${colors.textPrimary};
+    line-height: ${typography.lineHeights.normal};
+  }
+  ::selection { background: ${colors.primary[200]}; }
+`;
 
 const ProtectedRoute: React.FC = () => {
   const { loading, isAuthenticated } = useAuth();
 
   if (loading) {
-    return <div style={{ padding: 24 }}>Dang tai...</div>;
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        background: colors.background 
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ 
+            width: 48, 
+            height: 48, 
+            border: `3px solid ${colors.neutral[200]}`,
+            borderTopColor: colors.primary[600],
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }} />
+          <p style={{ color: colors.textSecondary }}>Đang tải...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -66,81 +93,144 @@ const ProtectedRoute: React.FC = () => {
 const AppShell: React.FC = () => {
   const { logout, user } = useAuth();
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = useMemo(
     () => [
-      { to: '/', label: 'Lo nong san' },
-      { to: '/add-event', label: 'Ghi nhat ky' },
+      { to: '/', label: 'Lô nông sản', icon: '📦' },
+      { to: '/add-event', label: 'Ghi nhật ký', icon: '📝' },
+      { to: '/farming-areas', label: 'Vùng trồng', icon: '🌾' },
+      { to: '/certifications', label: 'Chứng nhận', icon: '📜' },
+      { to: '/export', label: 'Xuất báo cáo', icon: '📊' },
+      { to: '/admin', label: 'Quản trị', icon: '⚙️' },
     ],
     []
   );
 
-  return (
-    <div style={shellStyle}>
-      <header
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-          backdropFilter: 'blur(12px)',
-          background: 'rgba(247, 248, 244, 0.92)',
-          borderBottom: '1px solid #e5e7eb',
-        }}
-      >
-        <div
-          style={{
-            ...contentStyle,
-            paddingTop: 16,
-            paddingBottom: 16,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 16,
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>AgriTrace Web</div>
-            <div style={{ color: '#64748b', fontSize: 13 }}>
-              Ban thao tac nhanh cho lo nong san va truy xuat
-            </div>
-          </div>
+  const isActive = (to: string) => {
+    if (to === '/') return location.pathname === '/' || location.pathname === '/products';
+    return location.pathname.startsWith(to);
+  };
 
-          <nav style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+  return (
+    <div style={{ minHeight: '100vh', background: colors.background }}>
+      {/* Header */}
+      <header style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        background: colors.surface,
+        borderBottom: `1px solid ${colors.neutral[200]}`,
+        boxShadow: shadows.sm,
+      }}>
+        <div style={{
+          maxWidth: 1280,
+          margin: '0 auto',
+          padding: `0 ${spacing[6]}`,
+          height: 72,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: spacing[6],
+        }}>
+          {/* Logo */}
+          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+            <div style={{
+              width: 40,
+              height: 40,
+              background: `linear-gradient(135deg, ${colors.primary[500]}, ${colors.primary[700]})`,
+              borderRadius: borderRadius.lg,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: 20,
+            }}>🌿</div>
+            <div>
+              <div style={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.lg, color: colors.textPrimary }}>
+                AgriTrace
+              </div>
+              <div style={{ fontSize: typography.sizes.xs, color: colors.textMuted }}>
+                Truy xuất nguồn gốc
+              </div>
+            </div>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: spacing[1],
+            flex: 1,
+            justifyContent: 'center',
+          }}>
             {navItems.map((item) => {
-              const active = item.to === '/'
-                ? location.pathname === '/' || location.pathname === '/products'
-                : location.pathname.startsWith(item.to);
+              const active = isActive(item.to);
               return (
-                <Link key={item.to} to={item.to} style={topNavLink(active)}>
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  style={{
+                    textDecoration: 'none',
+                    padding: `${spacing[2]} ${spacing[4]}`,
+                    borderRadius: borderRadius.lg,
+                    fontSize: typography.sizes.sm,
+                    fontWeight: active ? typography.weights.semibold : typography.weights.medium,
+                    color: active ? colors.primary[700] : colors.textSecondary,
+                    background: active ? colors.primary[50] : 'transparent',
+                    transition: 'all 0.2s ease',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
                   {item.label}
                 </Link>
               );
             })}
           </nav>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* User Menu */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4] }}>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 13, color: '#64748b' }}>Dang nhap boi</div>
-              <div style={{ fontWeight: 700 }}>{user?.name || user?.email || 'Nguoi dung'}</div>
+              <div style={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
+                {user?.name || 'Người dùng'}
+              </div>
+              <div style={{ fontSize: typography.sizes.xs, color: colors.textMuted }}>
+                {user?.email}
+              </div>
             </div>
             <button
               onClick={logout}
               style={{
-                border: '1px solid #d1d5db',
-                background: '#fff',
-                borderRadius: 10,
-                padding: '10px 14px',
+                background: colors.neutral[100],
+                border: 'none',
+                borderRadius: borderRadius.lg,
+                padding: `${spacing[2]} ${spacing[4]}`,
+                fontSize: typography.sizes.sm,
+                fontWeight: typography.weights.medium,
+                color: colors.textSecondary,
                 cursor: 'pointer',
-                fontWeight: 600,
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = colors.neutral[200];
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = colors.neutral[100];
               }}
             >
-              Dang xuat
+              Đăng xuất
             </button>
           </div>
         </div>
       </header>
 
-      <main style={contentStyle}>
+      {/* Main Content */}
+      <main style={{
+        maxWidth: 1280,
+        margin: '0 auto',
+        padding: `${spacing[8]} ${spacing[6]} ${spacing[16]}`,
+        minHeight: 'calc(100vh - 72px)',
+      }}>
         <Outlet />
       </main>
     </div>
@@ -173,15 +263,13 @@ const QuickAddEventPage: React.FC = () => {
       })
       .catch((err) => {
         if (!mounted) return;
-        setError(err.message || 'Khong tai duoc danh sach lo');
+        setError(err.message || 'Không tải được danh sách lô');
       })
       .finally(() => {
         if (mounted) setLoading(false);
       });
 
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [productId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -190,7 +278,7 @@ const QuickAddEventPage: React.FC = () => {
     setResult(null);
 
     if (!productId || !description.trim()) {
-      setError('Vui long chon lo va nhap mo ta su kien');
+      setError('Vui lòng chọn lô và nhập mô tả sự kiện');
       return;
     }
 
@@ -203,51 +291,69 @@ const QuickAddEventPage: React.FC = () => {
       });
       setResult(data);
       setDescription('');
-      setEventType('SEEDING');
     } catch (err: any) {
-      setError(err.message || 'Khong tao duoc su kien');
+      setError(err.message || 'Không tạo được sự kiện');
     } finally {
       setSubmitting(false);
     }
   };
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: `${spacing[3]} ${spacing[4]}`,
+    border: `1px solid ${colors.neutral[300]}`,
+    borderRadius: borderRadius.lg,
+    fontSize: typography.sizes.base,
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+    outline: 'none',
+  };
+
   return (
-    <section>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ margin: 0 }}>Ghi nhat ky canh tac</h1>
-        <p style={{ margin: '8px 0 0', color: '#64748b' }}>
-          Chon lo, ghi mo ta ngan gon, sau do gui len backend va blockchain.
+    <div style={{ maxWidth: 640, margin: '0 auto' }}>
+      {/* Page Header */}
+      <div style={{ marginBottom: spacing[8] }}>
+        <h1 style={{ 
+          fontSize: typography.sizes['3xl'], 
+          fontWeight: typography.weights.bold,
+          color: colors.textPrimary,
+          marginBottom: spacing[2],
+        }}>
+          Ghi nhật ký canh tác
+        </h1>
+        <p style={{ fontSize: typography.sizes.base, color: colors.textSecondary }}>
+          Ghi lại các hoạt động sản xuất và đồng bộ lên blockchain
         </p>
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr)',
-          gap: 16,
-          maxWidth: 760,
-        }}
-      >
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            background: '#fff',
-            border: '1px solid #e5e7eb',
-            borderRadius: 16,
-            padding: 24,
-          }}
-        >
-          <div style={{ display: 'grid', gap: 16 }}>
-            <label style={{ display: 'grid', gap: 8 }}>
-              <span style={{ fontWeight: 700 }}>Lo nong san</span>
+      {/* Form Card */}
+      <div style={{
+        background: colors.surface,
+        borderRadius: borderRadius.xl,
+        boxShadow: shadows.md,
+        border: `1px solid ${colors.neutral[200]}`,
+        padding: spacing[8],
+      }}>
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[6] }}>
+            {/* Product Select */}
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: spacing[2], 
+                fontWeight: typography.weights.medium,
+                fontSize: typography.sizes.sm,
+                color: colors.textPrimary,
+              }}>
+                Lô nông sản
+              </label>
               <select
                 value={productId}
                 onChange={(e) => setProductId(e.target.value)}
                 disabled={loading || products.length === 0}
-                style={{ padding: 12, borderRadius: 10, border: '1px solid #d1d5db' }}
+                style={{ ...inputStyle, cursor: 'pointer' }}
               >
                 {products.length === 0 ? (
-                  <option value="">Khong co lo nao</option>
+                  <option value="">Chưa có lô nào</option>
                 ) : (
                   products.map((product) => (
                     <option key={product._id} value={product._id}>
@@ -256,89 +362,116 @@ const QuickAddEventPage: React.FC = () => {
                   ))
                 )}
               </select>
-            </label>
+            </div>
 
-            <label style={{ display: 'grid', gap: 8 }}>
-              <span style={{ fontWeight: 700 }}>Loai hanh dong</span>
+            {/* Event Type Select */}
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: spacing[2], 
+                fontWeight: typography.weights.medium,
+                fontSize: typography.sizes.sm,
+                color: colors.textPrimary,
+              }}>
+                Loại hoạt động
+              </label>
               <select
                 value={eventType}
                 onChange={(e) => setEventType(e.target.value as EventType)}
-                style={{ padding: 12, borderRadius: 10, border: '1px solid #d1d5db' }}
+                style={{ ...inputStyle, cursor: 'pointer' }}
               >
                 {eventTypeOptions.map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {eventTypeLabels[item]}
                   </option>
                 ))}
               </select>
-            </label>
+            </div>
 
-            <label style={{ display: 'grid', gap: 8 }}>
-              <span style={{ fontWeight: 700 }}>Ghi chu</span>
+            {/* Description Textarea */}
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: spacing[2], 
+                fontWeight: typography.weights.medium,
+                fontSize: typography.sizes.sm,
+                color: colors.textPrimary,
+              }}>
+                Mô tả chi tiết
+              </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                rows={5}
-                placeholder="Vi du: Bon phan dot 1, tuoi nuoc sang som, thu hoach ngay 11/03."
-                style={{ padding: 12, borderRadius: 10, border: '1px solid #d1d5db', resize: 'vertical' }}
+                rows={4}
+                placeholder="Ví dụ: Bón phân NPK đợt 1, tưới nước sáng sớm, thu hoạch ngày 11/03..."
+                style={{ ...inputStyle, resize: 'vertical', minHeight: 120 }}
               />
-            </label>
+            </div>
 
+            {/* Error Message */}
             {error && (
-              <div
-                style={{
-                  background: '#fef2f2',
-                  color: '#b91c1c',
-                  border: '1px solid #fecaca',
-                  borderRadius: 10,
-                  padding: 12,
-                }}
-              >
+              <div style={{
+                background: '#fef2f2',
+                color: colors.error,
+                padding: spacing[4],
+                borderRadius: borderRadius.lg,
+                fontSize: typography.sizes.sm,
+              }}>
                 {error}
               </div>
             )}
 
+            {/* Success Message */}
             {result && (
-              <div
-                style={{
-                  background: '#f0fdf4',
-                  color: '#166534',
-                  border: '1px solid #bbf7d0',
-                  borderRadius: 10,
-                  padding: 12,
-                }}
-              >
-                <div style={{ fontWeight: 700, marginBottom: 6 }}>Tao su kien thanh cong</div>
-                <div style={{ fontSize: 13, marginBottom: 4 }}>
-                  Trang thai blockchain: {result.onChainStatus}
+              <div style={{
+                background: colors.primary[50],
+                color: colors.primary[700],
+                padding: spacing[4],
+                borderRadius: borderRadius.lg,
+              }}>
+                <div style={{ fontWeight: typography.weights.semibold, marginBottom: spacing[2] }}>
+                  ✓ Tạo sự kiện thành công
+                </div>
+                <div style={{ fontSize: typography.sizes.sm }}>
+                  Trạng thái blockchain: {result.onChainStatus}
                 </div>
                 {result.txHash && (
-                  <div style={{ fontFamily: 'monospace', fontSize: 12, wordBreak: 'break-all' }}>
+                  <div style={{ 
+                    fontFamily: typography.fontFamilyMono, 
+                    fontSize: typography.sizes.xs, 
+                    marginTop: spacing[2],
+                    wordBreak: 'break-all',
+                    opacity: 0.8,
+                  }}>
                     Tx: {result.txHash}
                   </div>
                 )}
               </div>
             )}
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={submitting || loading}
               style={{
-                background: submitting ? '#94a3b8' : '#166534',
-                color: '#fff',
+                width: '100%',
+                padding: `${spacing[4]} ${spacing[6]}`,
+                background: submitting ? colors.neutral[400] : colors.primary[600],
+                color: 'white',
                 border: 'none',
-                borderRadius: 10,
-                padding: '12px 16px',
-                fontWeight: 700,
+                borderRadius: borderRadius.lg,
+                fontSize: typography.sizes.base,
+                fontWeight: typography.weights.semibold,
                 cursor: submitting ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
               }}
             >
-              {submitting ? 'Dang ghi len blockchain...' : 'Gui su kien'}
+              {submitting ? 'Đang ghi lên blockchain...' : 'Ghi nhật ký'}
             </button>
           </div>
         </form>
       </div>
-    </section>
+    </div>
   );
 };
 
@@ -353,6 +486,10 @@ const AppRoutes: React.FC = () => {
           <Route index element={<DashboardPage />} />
           <Route path="/products" element={<DashboardPage />} />
           <Route path="/add-event" element={<QuickAddEventPage />} />
+          <Route path="/farming-areas" element={<FarmingAreaPage />} />
+          <Route path="/certifications" element={<CertificationPage />} />
+          <Route path="/export" element={<ExportPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Route>
       </Route>
 
@@ -364,6 +501,8 @@ const AppRoutes: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
+      <style>{globalStyles}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <BrowserRouter>
         <AppRoutes />
       </BrowserRouter>

@@ -92,6 +92,14 @@ class HomeScreen extends StatelessWidget {
                     'Cập nhật nhật ký sản xuất, đóng gói và vận chuyển cho từng lô.',
                 onTap: () => Navigator.pushNamed(context, AppRouter.login),
               ),
+              const SizedBox(height: 14),
+              _GlassActionCard(
+                icon: Icons.person_add_rounded,
+                title: 'Đăng ký tài khoản',
+                subtitle:
+                    'Tạo tài khoản mới để quản lý lô nông sản của bạn.',
+                onTap: () => Navigator.pushNamed(context, AppRouter.register),
+              ),
               const SizedBox(height: 18),
               GlassPanel(
                 child: Column(
