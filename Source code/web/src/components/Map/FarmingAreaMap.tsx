@@ -1,4 +1,8 @@
 import React, { useMemo } from 'react';
+import L from 'leaflet';
+import { MapContainer, Marker, TileLayer } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import './map.css';
 import {
   borderRadius,
   colors,
@@ -6,102 +10,51 @@ import {
   spacing,
   typography,
 } from '../../core/theme';
-
-interface Coordinates {
-  lat: number;
-  lng: number;
-}
+import {
+  DEFAULT_MAP_CENTER,
+  DEFAULT_MAP_ZOOM,
+  createMapPinIcon,
+  formatCoordinate,
+  hasValidCoordinates,
+  type Coordinates,
+} from './mapUtils';
 
 interface FarmingAreaMapProps {
   coordinates?: Coordinates;
   title?: string;
   address?: string;
   height?: number;
+  interactive?: boolean;
 }
 
-const MAP_DELTA = 0.008;
-
-const isValidCoordinate = (value: number, min: number, max: number) =>
-  Number.isFinite(value) && value >= min && value <= max;
-
-const hasValidCoordinates = (
-  coordinates?: Coordinates
-): coordinates is Coordinates =>
-  Boolean(
-    coordinates &&
-      isValidCoordinate(coordinates.lat, -90, 90) &&
-      isValidCoordinate(coordinates.lng, -180, 180)
-  );
-
-const buildEmbedUrl = ({ lat, lng }: Coordinates) => {
-  const west = lng - MAP_DELTA;
-  const east = lng + MAP_DELTA;
-  const south = lat - MAP_DELTA;
-  const north = lat + MAP_DELTA;
-  const bbox = [west, south, east, north].join(',');
-
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(
-    bbox
-  )}&layer=mapnik&marker=${encodeURIComponent(`${lat},${lng}`)}`;
-};
-
-const buildOpenStreetMapUrl = ({ lat, lng }: Coordinates) =>
-  `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=15/${lat}/${lng}`;
+const markerIcon = createMapPinIcon();
 
 const FarmingAreaMap: React.FC<FarmingAreaMapProps> = ({
   coordinates,
-  title = 'Bản đồ vùng trồng',
+  title = 'Ban do vung trong',
   address,
   height = 220,
+  interactive = false,
 }) => {
-  const embedUrl = useMemo(
-    () => (hasValidCoordinates(coordinates) ? buildEmbedUrl(coordinates) : ''),
-    [coordinates]
-  );
+  const center = hasValidCoordinates(coordinates)
+    ? coordinates
+    : DEFAULT_MAP_CENTER;
 
-  const mapUrl = useMemo(
+  const mapLink = useMemo(
     () =>
-      hasValidCoordinates(coordinates) ? buildOpenStreetMapUrl(coordinates) : '',
-    [coordinates]
+      `https://www.openstreetmap.org/?mlat=${center.lat}&mlon=${center.lng}#map=15/${center.lat}/${center.lng}`,
+    [center]
   );
-
-  if (!hasValidCoordinates(coordinates)) {
-    return (
-      <div
-        style={{
-          borderRadius: borderRadius.xl,
-          border: `1px dashed ${colors.neutral[300]}`,
-          background: colors.neutral[50],
-          padding: spacing[5],
-          color: colors.textSecondary,
-        }}
-      >
-        <div
-          style={{
-            fontWeight: typography.weights.semibold,
-            color: colors.textPrimary,
-            marginBottom: spacing[2],
-          }}
-        >
-          {title}
-        </div>
-        <p style={{ margin: 0, fontSize: typography.sizes.sm, lineHeight: 1.6 }}>
-          Chưa có tọa độ để hiển thị bản đồ. Hãy cập nhật `latitude` và
-          `longitude` cho vùng trồng để bật chế độ xem vị trí trực quan.
-        </p>
-      </div>
-    );
-  }
 
   return (
-    <div>
+    <div className="agri-map">
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'flex-start',
+          gap: spacing[3],
           flexWrap: 'wrap',
-          gap: spacing[2],
           marginBottom: spacing[3],
         }}
       >
@@ -119,82 +72,134 @@ const FarmingAreaMap: React.FC<FarmingAreaMapProps> = ({
             style={{
               fontSize: typography.sizes.xs,
               color: colors.textSecondary,
+              maxWidth: 460,
             }}
           >
-            {address || 'Vị trí vùng trồng theo tọa độ đã khai báo'}
+            {address || 'Chua co dia chi cu the cho vi tri nay.'}
           </div>
         </div>
         <a
-          href={mapUrl}
+          href={mapLink}
           target="_blank"
           rel="noreferrer"
           style={{
-            textDecoration: 'none',
             color: colors.primary[700],
+            textDecoration: 'none',
             fontWeight: typography.weights.semibold,
             fontSize: typography.sizes.sm,
           }}
         >
-          Mở bản đồ lớn
+          Mo ban do lon
         </a>
       </div>
 
       <div
         style={{
-          borderRadius: borderRadius.xl,
+          position: 'relative',
+          height,
+          borderRadius: borderRadius['2xl'],
           overflow: 'hidden',
           border: `1px solid ${colors.neutral[200]}`,
-          boxShadow: shadows.sm,
-          background: colors.surface,
+          boxShadow: shadows.md,
         }}
       >
-        <iframe
-          title={title}
-          src={embedUrl}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          style={{
-            width: '100%',
-            height,
-            border: 'none',
-            display: 'block',
-          }}
-        />
+        <MapContainer
+          center={[center.lat, center.lng]}
+          zoom={DEFAULT_MAP_ZOOM}
+          scrollWheelZoom={interactive}
+          dragging={interactive}
+          zoomControl={interactive}
+          doubleClickZoom={interactive}
+          attributionControl
+          style={{ height: '100%', width: '100%' }}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          />
+          {hasValidCoordinates(coordinates) && (
+            <Marker
+              position={[coordinates.lat, coordinates.lng]}
+              icon={markerIcon as L.Icon | L.DivIcon}
+            />
+          )}
+        </MapContainer>
+
+        {!hasValidCoordinates(coordinates) && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background:
+                'linear-gradient(180deg, rgba(244, 247, 244, 0.94) 0%, rgba(235, 244, 236, 0.94) 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: spacing[6],
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ maxWidth: 360 }}>
+              <div
+                style={{
+                  fontSize: typography.sizes.lg,
+                  fontWeight: typography.weights.semibold,
+                  color: colors.textPrimary,
+                  marginBottom: spacing[2],
+                }}
+              >
+                Chua co toa do
+              </div>
+              <div
+                style={{
+                  fontSize: typography.sizes.sm,
+                  lineHeight: 1.7,
+                  color: colors.textSecondary,
+                }}
+              >
+                Nhap dia chi hoac chon vi tri tren ban do de hien thi vung trong
+                mot cach truc quan.
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          gap: spacing[2],
-          flexWrap: 'wrap',
-          marginTop: spacing[3],
-        }}
-      >
-        <span
+      {hasValidCoordinates(coordinates) && (
+        <div
           style={{
-            background: colors.primary[50],
-            color: colors.primary[700],
-            padding: `${spacing[1]} ${spacing[3]}`,
-            borderRadius: borderRadius.full,
-            fontSize: typography.sizes.xs,
-            fontWeight: typography.weights.semibold,
+            display: 'flex',
+            gap: spacing[2],
+            flexWrap: 'wrap',
+            marginTop: spacing[3],
           }}
         >
-          Lat: {coordinates.lat.toFixed(6)}
-        </span>
-        <span
-          style={{
-            background: colors.neutral[100],
-            color: colors.textSecondary,
-            padding: `${spacing[1]} ${spacing[3]}`,
-            borderRadius: borderRadius.full,
-            fontSize: typography.sizes.xs,
-            fontWeight: typography.weights.semibold,
-          }}
-        >
-          Lng: {coordinates.lng.toFixed(6)}
-        </span>
-      </div>
+          <span
+            style={{
+              background: colors.primary[50],
+              color: colors.primary[700],
+              borderRadius: borderRadius.full,
+              padding: `${spacing[1]} ${spacing[3]}`,
+              fontSize: typography.sizes.xs,
+              fontWeight: typography.weights.semibold,
+            }}
+          >
+            Lat: {formatCoordinate(coordinates.lat)}
+          </span>
+          <span
+            style={{
+              background: colors.neutral[100],
+              color: colors.textSecondary,
+              borderRadius: borderRadius.full,
+              padding: `${spacing[1]} ${spacing[3]}`,
+              fontSize: typography.sizes.xs,
+              fontWeight: typography.weights.semibold,
+            }}
+          >
+            Lng: {formatCoordinate(coordinates.lng)}
+          </span>
+        </div>
+      )}
     </div>
   );
 };

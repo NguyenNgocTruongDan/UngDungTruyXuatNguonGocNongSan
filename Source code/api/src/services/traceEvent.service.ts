@@ -15,6 +15,16 @@ import env from '../config/env';
 const isBlockchainConfigured = () =>
   !!(env.CONTRACT_ADDRESS && env.BLOCKCHAIN_PRIVATE_KEY);
 
+const BLOCKCHAIN_READ_TIMEOUT_MS = 2500;
+
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number) =>
+  Promise.race<T>([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error(`Timeout after ${timeoutMs}ms`)), timeoutMs);
+    }),
+  ]);
+
 const normalizeImages = (
   images?: Array<string | { path?: string; filename?: string }>
 ) => {
@@ -186,7 +196,10 @@ export const getFullTrace = async (productId: string) => {
 
   let onChain = null;
   try {
-    onChain = await getBatchHistoryFromChain(product._id.toString());
+    onChain = await withTimeout(
+      getBatchHistoryFromChain(product._id.toString()),
+      BLOCKCHAIN_READ_TIMEOUT_MS
+    );
   } catch (error: any) {
     console.error('Blockchain getHistory failed:', error.message);
   }

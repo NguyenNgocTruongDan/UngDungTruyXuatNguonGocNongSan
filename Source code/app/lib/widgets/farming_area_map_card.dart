@@ -1,20 +1,17 @@
+import 'package:app/core/theme.dart';
 import 'package:app/models/farming_area.dart';
+import 'package:app/widgets/liquid_glass.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-const _mapCardBorder = Color(0xFFFCD34D);
-const _mapCardBackground = Color(0xFFFFFBEB);
-const _mapCardText = Color(0xFF92400E);
-const _mapAccent = Color(0xFF166534);
 
 class FarmingAreaMapCard extends StatelessWidget {
   const FarmingAreaMapCard({
     super.key,
     required this.farmingArea,
     this.title = 'Ban do vung trong',
-    this.height = 220,
+    this.height = 240,
   });
 
   final FarmingArea farmingArea;
@@ -26,32 +23,21 @@ class FarmingAreaMapCard extends StatelessWidget {
     final coordinates = farmingArea.coordinates;
 
     if (coordinates == null) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: _mapCardBorder),
-        ),
+      return GlassPanel(
+        radius: 28,
+        padding: const EdgeInsets.all(18),
+        colors: [
+          Colors.white.withValues(alpha: 0.40),
+          Colors.white.withValues(alpha: 0.18),
+        ],
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
             Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                color: _mapCardText,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Chua co toa do de hien thi ban do. Hay cap nhat latitude va longitude cho vung trong.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[700],
-                height: 1.45,
-              ),
+              'Vung trong nay chua co toa do. Hay cap nhat dia chi hoac vi tri de hien thi ban do truc quan.',
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
         ),
@@ -60,14 +46,13 @@ class FarmingAreaMapCard extends StatelessWidget {
 
     final point = LatLng(coordinates.lat, coordinates.lng);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _mapCardBorder),
-      ),
+    return GlassPanel(
+      radius: 30,
+      padding: const EdgeInsets.all(18),
+      colors: [
+        Colors.white.withValues(alpha: 0.42),
+        Colors.white.withValues(alpha: 0.18),
+      ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -78,21 +63,11 @@ class FarmingAreaMapCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: _mapCardText,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
+                    Text(title, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 6),
                     Text(
                       farmingArea.address,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[700],
-                        height: 1.4,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
                 ),
@@ -100,77 +75,96 @@ class FarmingAreaMapCard extends StatelessWidget {
               const SizedBox(width: 12),
               TextButton.icon(
                 onPressed: () => _openMap(point),
-                icon: const Icon(Icons.open_in_new, size: 16),
+                icon: const Icon(Icons.open_in_new_rounded, size: 18),
                 label: const Text('Mo lon'),
-                style: TextButton.styleFrom(
-                  foregroundColor: _mapAccent,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(24),
             child: SizedBox(
               height: height,
-              child: FlutterMap(
-                options: MapOptions(
-                  initialCenter: point,
-                  initialZoom: 15,
-                  interactionOptions: const InteractionOptions(
-                    flags: InteractiveFlag.none,
-                  ),
-                ),
+              child: Stack(
                 children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: point,
-                        width: 44,
-                        height: 44,
-                        child: const Icon(
-                          Icons.location_on,
-                          color: Colors.red,
-                          size: 36,
-                        ),
+                  FlutterMap(
+                    options: MapOptions(
+                      initialCenter: point,
+                      initialZoom: 15,
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.none,
+                      ),
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.example.app',
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: point,
+                            width: 48,
+                            height: 48,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.82),
+                                shape: BoxShape.circle,
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x22121B34),
+                                    blurRadius: 12,
+                                    offset: Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.place_rounded,
+                                color: AppColors.pine,
+                                size: 32,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
+                  ),
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    right: 12,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _CoordinateChip(
+                                label: 'Lat',
+                                value: coordinates.lat.toStringAsFixed(6),
+                              ),
+                              _CoordinateChip(
+                                label: 'Lng',
+                                value: coordinates.lng.toStringAsFixed(6),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _CoordinateChip(
-                label: 'Lat',
-                value: coordinates.lat.toStringAsFixed(6),
-                backgroundColor: _mapCardBackground,
-                foregroundColor: _mapCardText,
-              ),
-              _CoordinateChip(
-                label: 'Lng',
-                value: coordinates.lng.toStringAsFixed(6),
-                backgroundColor: const Color(0xFFF1F5F9),
-                foregroundColor: const Color(0xFF334155),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
           Text(
-            'Map data © OpenStreetMap contributors',
-            style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+            'Map data OpenStreetMap contributors',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontSize: 11),
           ),
         ],
       ),
@@ -187,32 +181,25 @@ class FarmingAreaMapCard extends StatelessWidget {
 }
 
 class _CoordinateChip extends StatelessWidget {
-  const _CoordinateChip({
-    required this.label,
-    required this.value,
-    required this.backgroundColor,
-    required this.foregroundColor,
-  });
+  const _CoordinateChip({required this.label, required this.value});
 
   final String label;
   final String value;
-  final Color backgroundColor;
-  final Color foregroundColor;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: Colors.white.withValues(alpha: 0.84),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         '$label: $value',
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: foregroundColor,
+          fontWeight: FontWeight.w800,
+          color: AppColors.ink,
         ),
       ),
     );
