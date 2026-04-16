@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { traceEventApi } from '../../core/api/traceEvent.api';
 import type { FullTrace, VerifyResult } from '../../core/types';
 import BlockchainBadge from '../../components/BlockchainBadge/BlockchainBadge';
+import FarmingAreaMap from '../../components/Map/FarmingAreaMap';
 import QRCodeGenerator from '../../components/QRCode/QRCodeGenerator';
 import { colors, spacing, borderRadius, shadows, typography } from '../../core/theme';
 
@@ -87,7 +88,7 @@ const TraceDetailPage: React.FC = () => {
   }
 
   const { product, events, onChain } = trace;
-  const farmingArea = product.farming_area as any;
+  const farmingArea = product.farming_area;
   const certifications = farmingArea?.certifications || [];
 
   return (
@@ -244,6 +245,14 @@ const TraceDetailPage: React.FC = () => {
                   </div>
                 </div>
               )}
+              <div style={{ marginTop: spacing[2] }}>
+                <FarmingAreaMap
+                  coordinates={farmingArea.coordinates}
+                  address={farmingArea.address}
+                  title="Ban do vung canh tac"
+                  height={220}
+                />
+              </div>
             </div>
           </div>
         )}

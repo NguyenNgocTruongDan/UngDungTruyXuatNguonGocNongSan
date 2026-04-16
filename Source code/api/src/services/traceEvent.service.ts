@@ -2,13 +2,13 @@ import TraceEvent, { ActionType } from '../models/TraceEvent';
 import Product from '../models/Product';
 import { NotFoundError } from '../utils/errors';
 import {
+  getBatchHistoryFromChain,
   recordActionOnChain,
-  getHistoryFromChain,
   verifyActionOnChain,
   hashEventData,
   createBatchOnChain,
   batchExistsOnChain,
-} from './blockchain.service';
+} from './blockchain';
 import { notifyTraceEventAdded } from './notification.service';
 import env from '../config/env';
 
@@ -186,7 +186,7 @@ export const getFullTrace = async (productId: string) => {
 
   let onChain = null;
   try {
-    onChain = await getHistoryFromChain(product._id.toString());
+    onChain = await getBatchHistoryFromChain(product._id.toString());
   } catch (error: any) {
     console.error('Blockchain getHistory failed:', error.message);
   }

@@ -1,6 +1,7 @@
 import 'package:app/models/trace_event.dart';
 import 'package:app/providers/providers.dart';
 import 'package:app/widgets/blockchain_badge.dart';
+import 'package:app/widgets/farming_area_map_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,7 +43,10 @@ class TraceTimelineScreen extends ConsumerWidget {
             children: [
               CircularProgressIndicator(color: _primaryGreen),
               SizedBox(height: 16),
-              Text('Đang tải thông tin...', style: TextStyle(color: Colors.grey)),
+              Text(
+                'Đang tải thông tin...',
+                style: TextStyle(color: Colors.grey),
+              ),
             ],
           ),
         ),
@@ -58,7 +62,11 @@ class TraceTimelineScreen extends ConsumerWidget {
                     color: const Color(0xFFFEE2E2),
                     borderRadius: BorderRadius.circular(50),
                   ),
-                  child: const Icon(Icons.error_outline, size: 48, color: Color(0xFFDC2626)),
+                  child: const Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: Color(0xFFDC2626),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -91,10 +99,13 @@ class TraceTimelineScreen extends ConsumerWidget {
         data: (trace) {
           final product = trace.product;
           final events = trace.events;
-          final certs = product.farmingArea?['certifications'] as List? ?? [];
-          
+          final farmingArea = product.farmingArea;
+          final certs = farmingArea?.certifications ?? const [];
+
           // Tính toán thống kê
-          final confirmedEvents = events.where((e) => e.onChainStatus == 'confirmed').length;
+          final confirmedEvents = events
+              .where((e) => e.onChainStatus == 'confirmed')
+              .length;
           final daysSinceCultivation = product.cultivationTime != null
               ? DateTime.now().difference(product.cultivationTime!).inDays
               : null;
@@ -117,11 +128,17 @@ class TraceTimelineScreen extends ConsumerWidget {
                       children: [
                         // AppBar custom với nút share
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           child: Row(
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                                icon: const Icon(
+                                  Icons.arrow_back,
+                                  color: Colors.white,
+                                ),
                                 onPressed: () => Navigator.of(context).pop(),
                               ),
                               const Expanded(
@@ -137,13 +154,24 @@ class TraceTimelineScreen extends ConsumerWidget {
                               ),
                               // Nút Share
                               IconButton(
-                                icon: const Icon(Icons.share, color: Colors.white),
-                                onPressed: () => _shareProduct(context, product),
+                                icon: const Icon(
+                                  Icons.share,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () =>
+                                    _shareProduct(context, product),
                               ),
                               // Nút QR
                               IconButton(
-                                icon: const Icon(Icons.qr_code, color: Colors.white),
-                                onPressed: () => _showQRDialog(context, product.batchId, product.name),
+                                icon: const Icon(
+                                  Icons.qr_code,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () => _showQRDialog(
+                                  context,
+                                  product.batchId,
+                                  product.name,
+                                ),
                               ),
                             ],
                           ),
@@ -163,7 +191,8 @@ class TraceTimelineScreen extends ConsumerWidget {
                                         width: 100,
                                         height: 100,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                                        errorBuilder: (_, _, _) =>
+                                            _imagePlaceholder(),
                                       )
                                     : _imagePlaceholder(),
                               ),
@@ -188,19 +217,34 @@ class TraceTimelineScreen extends ConsumerWidget {
                                       children: [
                                         // Type badge
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha: 0.2),
-                                            borderRadius: BorderRadius.circular(12),
+                                            color: Colors.white.withValues(
+                                              alpha: 0.2,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Text(product.typeIcon, style: const TextStyle(fontSize: 14)),
+                                              Text(
+                                                product.typeIcon,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                ),
+                                              ),
                                               const SizedBox(width: 4),
                                               Text(
                                                 product.typeLabel,
-                                                style: const TextStyle(color: Colors.white, fontSize: 12),
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 12,
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -211,13 +255,24 @@ class TraceTimelineScreen extends ConsumerWidget {
                                       ],
                                     ),
                                     const SizedBox(height: 8),
-                                    _heroInfoRow(Icons.category, product.category),
-                                    _heroInfoRow(Icons.location_on, product.origin),
+                                    _heroInfoRow(
+                                      Icons.category,
+                                      product.category,
+                                    ),
+                                    _heroInfoRow(
+                                      Icons.location_on,
+                                      product.origin,
+                                    ),
                                     if (product.cultivationTime != null)
-                                      _heroInfoRow(Icons.calendar_today, 
-                                        'Bắt đầu: ${shortDateFmt.format(product.cultivationTime!)}'),
+                                      _heroInfoRow(
+                                        Icons.calendar_today,
+                                        'Bắt đầu: ${shortDateFmt.format(product.cultivationTime!)}',
+                                      ),
                                     if (product.createdByName.isNotEmpty)
-                                      _heroInfoRow(Icons.person, 'Tạo bởi: ${product.createdByName}'),
+                                      _heroInfoRow(
+                                        Icons.person,
+                                        'Tạo bởi: ${product.createdByName}',
+                                      ),
                                   ],
                                 ),
                               ),
@@ -243,15 +298,29 @@ class TraceTimelineScreen extends ConsumerWidget {
                       borderColor: _purpleBorder,
                       child: Row(
                         children: [
-                          Expanded(child: _buildStatItem('📋', '${events.length}', 'Sự kiện')),
-                          Container(width: 1, height: 50, color: _purpleBorder),
-                          Expanded(child: _buildStatItem('✅', '$confirmedEvents', 'Đã xác thực')),
+                          Expanded(
+                            child: _buildStatItem(
+                              '📋',
+                              '${events.length}',
+                              'Sự kiện',
+                            ),
+                          ),
                           Container(width: 1, height: 50, color: _purpleBorder),
                           Expanded(
                             child: _buildStatItem(
-                              '📅', 
-                              daysSinceCultivation != null ? '$daysSinceCultivation' : 'N/A', 
-                              'Ngày canh tác'
+                              '✅',
+                              '$confirmedEvents',
+                              'Đã xác thực',
+                            ),
+                          ),
+                          Container(width: 1, height: 50, color: _purpleBorder),
+                          Expanded(
+                            child: _buildStatItem(
+                              '📅',
+                              daysSinceCultivation != null
+                                  ? '$daysSinceCultivation'
+                                  : 'N/A',
+                              'Ngày canh tác',
                             ),
                           ),
                         ],
@@ -270,9 +339,13 @@ class TraceTimelineScreen extends ConsumerWidget {
                         children: [
                           GestureDetector(
                             onTap: () {
-                              Clipboard.setData(ClipboardData(text: product.batchId));
+                              Clipboard.setData(
+                                ClipboardData(text: product.batchId),
+                              );
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Đã sao chép mã lô!')),
+                                const SnackBar(
+                                  content: Text('Đã sao chép mã lô!'),
+                                ),
                               );
                             },
                             child: Container(
@@ -284,7 +357,11 @@ class TraceTimelineScreen extends ConsumerWidget {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.qr_code, color: _primaryGreen, size: 20),
+                                  const Icon(
+                                    Icons.qr_code,
+                                    color: _primaryGreen,
+                                    size: 20,
+                                  ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
@@ -296,23 +373,34 @@ class TraceTimelineScreen extends ConsumerWidget {
                                       ),
                                     ),
                                   ),
-                                  const Icon(Icons.copy, color: Colors.grey, size: 16),
+                                  const Icon(
+                                    Icons.copy,
+                                    color: Colors.grey,
+                                    size: 16,
+                                  ),
                                 ],
                               ),
                             ),
                           ),
-                          if (product.description != null && product.description!.isNotEmpty) ...[
+                          if (product.description != null &&
+                              product.description!.isNotEmpty) ...[
                             const SizedBox(height: 12),
                             Text(
                               product.description!,
-                              style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                              style: TextStyle(
+                                color: Colors.grey[700],
+                                fontSize: 13,
+                              ),
                             ),
                           ],
                           if (product.createdAt != null) ...[
                             const SizedBox(height: 8),
                             Text(
                               'Ngày tạo: ${shortDateFmt.format(product.createdAt!)}',
-                              style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ],
@@ -321,7 +409,7 @@ class TraceTimelineScreen extends ConsumerWidget {
                     const SizedBox(height: 12),
 
                     // ===== CARD VÙNG CANH TÁC =====
-                    if (product.farmingArea != null)
+                    if (farmingArea != null)
                       _buildInfoCard(
                         icon: '🌾',
                         title: 'Vùng canh tác',
@@ -330,17 +418,42 @@ class TraceTimelineScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _detailRow('Tên vùng', product.farmingArea!['name'] ?? 'N/A'),
-                            _detailRow('Địa chỉ', product.farmingArea!['address'] ?? 'N/A'),
-                            if (product.farmingArea!['area_size'] != null)
-                              _detailRow('Diện tích', '${product.farmingArea!['area_size']} ha'),
-                            if (product.farmingArea!['owner'] != null)
-                              _detailRow('Chủ sở hữu', 
-                                '${product.farmingArea!['owner']['first_name'] ?? ''} ${product.farmingArea!['owner']['last_name'] ?? ''}'),
+                            _detailRow(
+                              'Tên vùng',
+                              farmingArea.name.isNotEmpty
+                                  ? farmingArea.name
+                                  : 'N/A',
+                            ),
+                            _detailRow(
+                              'Địa chỉ',
+                              farmingArea.address.isNotEmpty
+                                  ? farmingArea.address
+                                  : 'N/A',
+                            ),
+                            if (farmingArea.areaSize != null)
+                              _detailRow(
+                                'Diện tích',
+                                '${farmingArea.areaSize} ha',
+                              ),
+                            if (farmingArea.owner != null)
+                              _detailRow(
+                                'Chủ sở hữu',
+                                farmingArea.owner!.fullName.isNotEmpty
+                                    ? farmingArea.owner!.fullName
+                                    : 'N/A',
+                              ),
                           ],
                         ),
                       ),
-                    if (product.farmingArea != null) const SizedBox(height: 12),
+                    if (farmingArea != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: FarmingAreaMapCard(
+                          farmingArea: farmingArea,
+                          title: 'Ban do vung canh tac',
+                        ),
+                      ),
+                    if (farmingArea != null) const SizedBox(height: 12),
 
                     // ===== CARD CHỨNG NHẬN CHẤT LƯỢNG =====
                     if (certs.isNotEmpty)
@@ -356,17 +469,22 @@ class TraceTimelineScreen extends ConsumerWidget {
                             if (cert['type'] == 'VietGAP') icon = '🇻🇳';
                             if (cert['type'] == 'GlobalGAP') icon = '🌍';
                             if (cert['type'] == 'Organic') icon = '🌿';
-                            
+
                             // Parse expiry date
                             DateTime? expiryDate;
                             if (cert['expiry_date'] != null) {
-                              expiryDate = DateTime.tryParse(cert['expiry_date'].toString());
+                              expiryDate = DateTime.tryParse(
+                                cert['expiry_date'].toString(),
+                              );
                             }
-                            final daysUntilExpiry = expiryDate != null 
-                                ? expiryDate.difference(DateTime.now()).inDays 
-                                : null;
-                            final isExpiringSoon = daysUntilExpiry != null && daysUntilExpiry > 0 && daysUntilExpiry <= 30;
-                            
+                            final daysUntilExpiry = expiryDate
+                                ?.difference(DateTime.now())
+                                .inDays;
+                            final isExpiringSoon =
+                                daysUntilExpiry != null &&
+                                daysUntilExpiry > 0 &&
+                                daysUntilExpiry <= 30;
+
                             return Container(
                               margin: const EdgeInsets.only(bottom: 8),
                               padding: const EdgeInsets.all(12),
@@ -374,7 +492,9 @@ class TraceTimelineScreen extends ConsumerWidget {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: isValid ? _primaryGreen : const Color(0xFFDC2626),
+                                  color: isValid
+                                      ? _primaryGreen
+                                      : const Color(0xFFDC2626),
                                   width: 2,
                                 ),
                               ),
@@ -383,40 +503,65 @@ class TraceTimelineScreen extends ConsumerWidget {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(icon, style: const TextStyle(fontSize: 28)),
+                                      Text(
+                                        icon,
+                                        style: const TextStyle(fontSize: 28),
+                                      ),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              cert['name'] ?? cert['type'],
-                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                              (cert['name'] ??
+                                                      cert['type'] ??
+                                                      '')
+                                                  .toString(),
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
                                               'Số: ${cert['certificate_number'] ?? 'N/A'}',
-                                              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey[600],
+                                              ),
                                             ),
                                             Text(
                                               'Cấp bởi: ${cert['issuing_authority'] ?? 'N/A'}',
-                                              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey[600],
+                                              ),
                                             ),
                                           ],
                                         ),
                                       ),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
                                         decoration: BoxDecoration(
-                                          color: isValid ? _lightGreen : const Color(0xFFFEE2E2),
-                                          borderRadius: BorderRadius.circular(12),
+                                          color: isValid
+                                              ? _lightGreen
+                                              : const Color(0xFFFEE2E2),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
                                         child: Text(
                                           isValid ? '✓ Hợp lệ' : '✗ Hết hạn',
                                           style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
-                                            color: isValid ? _primaryGreen : const Color(0xFFDC2626),
+                                            color: isValid
+                                                ? _primaryGreen
+                                                : const Color(0xFFDC2626),
                                           ),
                                         ),
                                       ),
@@ -426,26 +571,39 @@ class TraceTimelineScreen extends ConsumerWidget {
                                   if (expiryDate != null) ...[
                                     const SizedBox(height: 8),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: isExpiringSoon ? const Color(0xFFFEF3C7) : Colors.grey[100],
+                                        color: isExpiringSoon
+                                            ? const Color(0xFFFEF3C7)
+                                            : Colors.grey[100],
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(
-                                            isExpiringSoon ? Icons.warning_amber : Icons.event,
+                                            isExpiringSoon
+                                                ? Icons.warning_amber
+                                                : Icons.event,
                                             size: 14,
-                                            color: isExpiringSoon ? const Color(0xFFD97706) : Colors.grey[600],
+                                            color: isExpiringSoon
+                                                ? const Color(0xFFD97706)
+                                                : Colors.grey[600],
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
                                             'Hết hạn: ${shortDateFmt.format(expiryDate)}',
                                             style: TextStyle(
                                               fontSize: 11,
-                                              color: isExpiringSoon ? const Color(0xFFD97706) : Colors.grey[600],
-                                              fontWeight: isExpiringSoon ? FontWeight.bold : FontWeight.normal,
+                                              color: isExpiringSoon
+                                                  ? const Color(0xFFD97706)
+                                                  : Colors.grey[600],
+                                              fontWeight: isExpiringSoon
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
                                             ),
                                           ),
                                           if (isExpiringSoon) ...[
@@ -463,11 +621,16 @@ class TraceTimelineScreen extends ConsumerWidget {
                                     ),
                                   ],
                                   // Hiển thị scope nếu có
-                                  if (cert['scope'] != null && cert['scope'].toString().isNotEmpty) ...[
+                                  if (cert['scope'] != null &&
+                                      cert['scope'].toString().isNotEmpty) ...[
                                     const SizedBox(height: 4),
                                     Text(
                                       'Phạm vi: ${cert['scope']}',
-                                      style: TextStyle(fontSize: 11, color: Colors.grey[600], fontStyle: FontStyle.italic),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey[600],
+                                        fontStyle: FontStyle.italic,
+                                      ),
                                     ),
                                   ],
                                 ],
@@ -496,8 +659,12 @@ class TraceTimelineScreen extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
-                                  trace.onChain != null ? Icons.verified : Icons.pending,
-                                  color: trace.onChain != null ? _blueText : Colors.grey,
+                                  trace.onChain != null
+                                      ? Icons.verified
+                                      : Icons.pending,
+                                  color: trace.onChain != null
+                                      ? _blueText
+                                      : Colors.grey,
                                   size: 28,
                                 ),
                               ),
@@ -507,19 +674,24 @@ class TraceTimelineScreen extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      trace.onChain != null 
+                                      trace.onChain != null
                                           ? 'Đã xác thực trên Blockchain'
                                           : 'Chưa có dữ liệu Blockchain',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        color: trace.onChain != null ? _blueText : Colors.grey[600],
+                                        color: trace.onChain != null
+                                            ? _blueText
+                                            : Colors.grey[600],
                                       ),
                                     ),
                                     if (trace.onChain != null) ...[
                                       const SizedBox(height: 4),
                                       Text(
                                         '${trace.onChain!.actionCount} sự kiện đã ghi',
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
                                       ),
                                     ],
                                   ],
@@ -539,9 +711,15 @@ class TraceTimelineScreen extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _detailRow('Batch ID', trace.onChain!.batchId),
+                                  _detailRow(
+                                    'Batch ID',
+                                    trace.onChain!.batchId,
+                                  ),
                                   if (trace.onChain!.owner.isNotEmpty)
-                                    _detailRow('Owner', _truncateAddress(trace.onChain!.owner)),
+                                    _detailRow(
+                                      'Owner',
+                                      _truncateAddress(trace.onChain!.owner),
+                                    ),
                                 ],
                               ),
                             ),
@@ -560,18 +738,24 @@ class TraceTimelineScreen extends ConsumerWidget {
                             color: _primaryGreen,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.timeline, color: Colors.white, size: 20),
+                          child: const Icon(
+                            Icons.timeline,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Text(
                           'Lịch sử truy xuất',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const Spacer(),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: _lightGreen,
                             borderRadius: BorderRadius.circular(12),
@@ -599,11 +783,18 @@ class TraceTimelineScreen extends ConsumerWidget {
                         ),
                         child: Column(
                           children: [
-                            Icon(Icons.history, size: 48, color: Colors.grey[400]),
+                            Icon(
+                              Icons.history,
+                              size: 48,
+                              color: Colors.grey[400],
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               'Chưa có sự kiện nào',
-                              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
                             ),
                           ],
                         ),
@@ -623,11 +814,17 @@ class TraceTimelineScreen extends ConsumerWidget {
                             height: 36,
                             indicator: Container(
                               decoration: BoxDecoration(
-                                color: isConfirmed ? _primaryGreen : Colors.grey[400],
+                                color: isConfirmed
+                                    ? _primaryGreen
+                                    : Colors.grey[400],
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: (isConfirmed ? _primaryGreen : Colors.grey).withValues(alpha: 0.3),
+                                    color:
+                                        (isConfirmed
+                                                ? _primaryGreen
+                                                : Colors.grey)
+                                            .withValues(alpha: 0.3),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),
@@ -697,7 +894,7 @@ class TraceTimelineScreen extends ConsumerWidget {
     Color textColor;
     String label;
     IconData icon;
-    
+
     switch (status) {
       case 'active':
         bgColor = const Color(0xFF22C55E);
@@ -717,7 +914,7 @@ class TraceTimelineScreen extends ConsumerWidget {
         label = 'Nháp';
         icon = Icons.edit;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -729,7 +926,14 @@ class TraceTimelineScreen extends ConsumerWidget {
         children: [
           Icon(icon, size: 12, color: textColor),
           const SizedBox(width: 4),
-          Text(label, style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.bold)),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
@@ -798,7 +1002,11 @@ class TraceTimelineScreen extends ConsumerWidget {
           width: 85,
           child: Text(
             label,
-            style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         Expanded(
@@ -817,7 +1025,8 @@ class TraceTimelineScreen extends ConsumerWidget {
   }
 
   void _shareProduct(BuildContext context, dynamic product) {
-    final text = '''
+    final text =
+        '''
 🌾 Thông tin truy xuất nguồn gốc
 
 📦 Sản phẩm: ${product.name}
@@ -838,7 +1047,9 @@ class TraceTimelineScreen extends ConsumerWidget {
           children: [
             const Icon(Icons.qr_code, color: _primaryGreen),
             const SizedBox(width: 8),
-            Expanded(child: Text(productName, style: const TextStyle(fontSize: 16))),
+            Expanded(
+              child: Text(productName, style: const TextStyle(fontSize: 16)),
+            ),
           ],
         ),
         content: Column(
@@ -881,7 +1092,10 @@ class TraceTimelineScreen extends ConsumerWidget {
                   Flexible(
                     child: Text(
                       batchId,
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -911,7 +1125,7 @@ class _EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isConfirmed = event.onChainStatus == 'confirmed';
-    
+
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 8, 0, 8),
       padding: const EdgeInsets.all(14),
@@ -958,14 +1172,14 @@ class _EventCard extends StatelessWidget {
               ),
             ],
           ),
-          
+
           // Description
           const SizedBox(height: 8),
           Text(
             event.description,
             style: TextStyle(fontSize: 13, color: Colors.grey[700]),
           ),
-          
+
           // Người ghi nhận
           if (event.recordedByName.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -980,7 +1194,7 @@ class _EventCard extends StatelessWidget {
               ],
             ),
           ],
-          
+
           // Details
           if (event.details != null && event.details!.isNotEmpty) ...[
             const SizedBox(height: 10),
@@ -994,25 +1208,33 @@ class _EventCard extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 8,
                 children: event.details!.entries
-                    .map((e) => Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '${e.key}:',
-                              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                    .map(
+                      (e) => Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${e.key}:',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${e.value}',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${e.value}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
                             ),
-                          ],
-                        ))
+                          ),
+                        ],
+                      ),
+                    )
                     .toList(),
               ),
             ),
           ],
-          
+
           // Images thumbnail
           if (event.images.isNotEmpty) ...[
             const SizedBox(height: 10),
@@ -1030,7 +1252,7 @@ class _EventCard extends StatelessWidget {
                       width: 60,
                       height: 60,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         width: 60,
                         height: 60,
                         color: Colors.grey[200],
@@ -1042,16 +1264,22 @@ class _EventCard extends StatelessWidget {
               ),
             ),
           ],
-          
+
           // Blockchain badge + block info
           const SizedBox(height: 10),
           Row(
             children: [
-              BlockchainBadge(status: event.onChainStatus, txHash: event.txHash),
+              BlockchainBadge(
+                status: event.onChainStatus,
+                txHash: event.txHash,
+              ),
               const Spacer(),
               if (event.blockNumber != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: _blueBg,
                     borderRadius: BorderRadius.circular(4),
@@ -1076,7 +1304,10 @@ class _EventCard extends StatelessWidget {
                 Tooltip(
                   message: event.dataHash!,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(4),
@@ -1097,4 +1328,4 @@ class _EventCard extends StatelessWidget {
       ),
     );
   }
-}
+}
